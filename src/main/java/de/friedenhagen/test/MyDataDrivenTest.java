@@ -24,7 +24,7 @@ public class MyDataDrivenTest {
                     volatile int i = 0;
 
                     public boolean hasNext() {
-                        return i < 1000;
+                        return i < 100;
                     }
 
                     public Object[] next() {
@@ -40,7 +40,7 @@ public class MyDataDrivenTest {
     }
 
     @Test
-    public void foo() {
-        assert current == current;
+    public void thirteenIsTheEvilNumber() {
+        assert current % 13 != 0;
     }
 }
