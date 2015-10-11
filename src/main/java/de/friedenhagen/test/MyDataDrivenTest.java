@@ -26,7 +26,7 @@ public class MyDataDrivenTest {
                     volatile int i = 0;
 
                     public boolean hasNext() {
-                        return i < 100;
+                        return i < 1000;
                     }
 
                     public Object[] next() {
@@ -43,6 +43,6 @@ public class MyDataDrivenTest {
 
     @Test
     public void thirteenIsTheEvilNumber() {
-        assertNotEquals("Must not be divisable by 13", 0, current % 13);
+        assertNotEquals("Must not be divisable by 101", 0, current % 101);
     }
 }
