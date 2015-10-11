@@ -24,9 +24,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -74,28 +76,28 @@ public class XmlRunListener extends RunListener {
     /**
      * The XML document
      */
-    private Document _document;
+    private final Document _document;
 
     /**
      * The document's root element
      */
-    private Element _root;
+    private final Element _root;
 
     /**
      * The element of the current test
      */
-    private ThreadLocal<Element> _currentTest = new ThreadLocal<Element>();
+    private final ThreadLocal<Element> _currentTest = new ThreadLocal<Element>();
 
     /**
      * The output stream to write the document to
      */
-    private OutputStream _out;
+    private final OutputStream _out;
 
     /**
      * A map of started tests and their respective start time
      */
-    private Map<Description, Long> _startedTests =
-            new HashMap<Description, Long>();
+    private final Map<Description, Long> _startedTests =
+            new ConcurrentHashMap<Description, Long>();
 
     /**
      * Constructs a new listener
@@ -104,27 +106,31 @@ public class XmlRunListener extends RunListener {
      */
     public XmlRunListener(OutputStream out) {
         _out = out;
+        final DocumentBuilder builder;
+        try {
+            builder = DocumentBuilderFactory.newInstance()
+                    .newDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+        _document = builder.newDocument();
+        _root = _document.createElement(TESTSUITE);
+        _document.appendChild(_root);
+
+        //add properties (just to match the DTD)
+        Element propElement = _document.createElement(PROPERTIES);
+        _root.appendChild(propElement);
     }
 
     /**
      * @see RunListener#testRunStarted(Description)
      */
     @Override
-    public void testRunStarted(Description description) throws Exception {
-        DocumentBuilder builder = DocumentBuilderFactory.newInstance()
-                .newDocumentBuilder();
-        _document = builder.newDocument();
-        _root = _document.createElement(TESTSUITE);
-        _document.appendChild(_root);
-
+    public synchronized void testRunStarted(Description description) throws Exception {
         //add required attributes to test suite
         String name = description.getDisplayName();
         _root.setAttribute(TESTSUITE_NAME,
                 name != null && !name.equalsIgnoreCase("null") ? name : UNKNOWN);
-
-        //add properties (just to match the DTD)
-        Element propElement = _document.createElement(PROPERTIES);
-        _root.appendChild(propElement);
     }
 
     /**
@@ -200,14 +206,14 @@ public class XmlRunListener extends RunListener {
             _currentTest.get().setAttribute(TESTCASE_TIME, String.valueOf(
                     (System.currentTimeMillis() - startTime) / 1000.0));
         }
-        _currentTest = null;
+        _currentTest.set(null);
     }
 
     /**
      * @see RunListener#testRunFinished(Result)
      */
     @Override
-    public void testRunFinished(Result result) throws Exception {
+    public synchronized void testRunFinished(Result result) throws Exception {
         _root.setAttribute(TESTSUITE_TESTS,
                 String.valueOf(result.getRunCount()));
         _root.setAttribute(TESTSUITE_FAILURES,
