@@ -178,6 +178,14 @@ public class XmlRunListener extends RunListener {
         }
     }
 
+    @Override
+    public synchronized void testAssumptionFailure(Failure failure) {
+        Element e = _document.createElement(SKIPPED);
+        _currentTest.get().appendChild(e);
+        String message = failure.getMessage();
+        e.setAttribute(SKIPPED_MESSAGE, message);
+    }
+
     /**
      * @see RunListener#testFailure(Failure)
      */

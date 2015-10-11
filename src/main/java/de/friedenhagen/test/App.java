@@ -6,6 +6,7 @@ import org.junit.runner.Computer;
 import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
+import org.junit.runner.notification.Failure;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -20,11 +21,10 @@ public class App
         final XmlRunListener xmlRunListener = new XmlRunListener(new FileOutputStream("target/out.xml"));
         final JUnitCore core = new JUnitCore();
         core.addListener(xmlRunListener);
-        core.addListener(new TextListener(System.out) {
+        core.addListener(new TextListener(System.out){
             @Override
-            public void testFinished(Description description) throws Exception {
-                super.testFinished(description);
-                System.out.printf("%s: %s\n", Thread.currentThread(), description);
+            public void testAssumptionFailure(Failure failure) {
+                System.out.print("I");
             }
         });
         final Computer computer = ParallelComputer.methods();

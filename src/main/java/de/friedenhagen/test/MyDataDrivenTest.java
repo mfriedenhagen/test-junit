@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Created by mirko on 07.10.15.
@@ -26,7 +27,7 @@ public class MyDataDrivenTest {
                     volatile int i = 0;
 
                     public boolean hasNext() {
-                        return i < 1000;
+                        return i < 102;
                     }
 
                     public Object[] next() {
@@ -43,6 +44,7 @@ public class MyDataDrivenTest {
 
     @Test
     public void thirteenIsTheEvilNumber() {
+        assumeTrue("Skip numbers divisable by 13", current % 13 != 0);
         assertNotEquals("Must not be divisable by 101", 0, current % 101);
     }
 }
