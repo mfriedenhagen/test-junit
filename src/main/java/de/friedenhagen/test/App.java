@@ -19,7 +19,7 @@ public class App
     public static void main( String[] args ) throws FileNotFoundException {
         final XmlRunListener xmlRunListener = new XmlRunListener(new FileOutputStream("target/out.xml"));
         final JUnitCore core = new JUnitCore();
-        //core.addListener(xmlRunListener);
+        core.addListener(xmlRunListener);
         core.addListener(new TextListener(System.out) {
             @Override
             public void testFinished(Description description) throws Exception {

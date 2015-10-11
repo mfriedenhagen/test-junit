@@ -84,7 +84,7 @@ public class XmlRunListener extends RunListener {
     /**
      * The element of the current test
      */
-    private Element _currentTest;
+    private ThreadLocal<Element> _currentTest = new ThreadLocal<Element>();
 
     /**
      * The output stream to write the document to
@@ -132,8 +132,8 @@ public class XmlRunListener extends RunListener {
      */
     @Override
     public synchronized void testStarted(Description description) throws Exception {
-        _currentTest = _document.createElement(TESTCASE);
-        _root.appendChild(_currentTest);
+        _currentTest.set(_document.createElement(TESTCASE));
+        _root.appendChild(_currentTest.get());
 
         //add required attributes
         String name = description.getDisplayName();
@@ -144,8 +144,8 @@ public class XmlRunListener extends RunListener {
             className = name.substring(bopen + 1, bclose);
             name = name.substring(0, bopen);
         }
-        _currentTest.setAttribute(TESTCASE_NAME, name);
-        _currentTest.setAttribute(TESTCASE_CLASSNAME, className);
+        _currentTest.get().setAttribute(TESTCASE_NAME, name);
+        _currentTest.get().setAttribute(TESTCASE_CLASSNAME, className);
         _startedTests.put(description, System.currentTimeMillis());
     }
 
@@ -158,7 +158,7 @@ public class XmlRunListener extends RunListener {
         }
 
         Element e = _document.createElement(SKIPPED);
-        _currentTest.appendChild(e);
+        _currentTest.get().appendChild(e);
 
         String message = "";
         Ignore ignore = description.getAnnotation(Ignore.class);
@@ -178,7 +178,7 @@ public class XmlRunListener extends RunListener {
     @Override
     public synchronized void testFailure(Failure failure) throws Exception {
         Element e = _document.createElement(FAILURE);
-        _currentTest.appendChild(e);
+        _currentTest.get().appendChild(e);
 
         if (failure.getMessage() != null) {
             e.setAttribute(FAILURE_MESSAGE, failure.getMessage());
@@ -197,7 +197,7 @@ public class XmlRunListener extends RunListener {
     public synchronized void testFinished(Description description) throws Exception {
         Long startTime = _startedTests.get(description);
         if (startTime != null) {
-            _currentTest.setAttribute(TESTCASE_TIME, String.valueOf(
+            _currentTest.get().setAttribute(TESTCASE_TIME, String.valueOf(
                     (System.currentTimeMillis() - startTime) / 1000.0));
         }
         _currentTest = null;
