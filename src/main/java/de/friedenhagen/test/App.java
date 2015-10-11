@@ -17,9 +17,9 @@ import java.io.FileOutputStream;
 public class App 
 {
     public static void main( String[] args ) throws FileNotFoundException {
-        final XmlRunListener runListener = new XmlRunListener(new FileOutputStream("target/out.xml"));
+        final XmlRunListener xmlRunListener = new XmlRunListener(new FileOutputStream("target/out.xml"));
         final JUnitCore core = new JUnitCore();
-        core.addListener(runListener);
+        //core.addListener(xmlRunListener);
         core.addListener(new TextListener(System.out) {
             @Override
             public void testFinished(Description description) throws Exception {
@@ -27,8 +27,8 @@ public class App
                 System.out.printf("%s: %s\n", Thread.currentThread(), description);
             }
         });
-        //final Computer computer = ParallelComputer.methods();
-        final Computer computer = Computer.serial();
+        final Computer computer = ParallelComputer.methods();
+        //final Computer computer = Computer.serial();
         final Result run = core.run(computer, MyDataDrivenTest.class);
         System.out.printf("Count %d, Time: %.3f, Failures: %s\n", run.getRunCount(), run.getRunTime()/1000.0, run.getFailures());
     }
