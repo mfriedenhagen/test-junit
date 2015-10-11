@@ -93,6 +93,8 @@ public class XmlRunListener extends RunListener {
      */
     private final OutputStream _out;
 
+    private volatile int ignoredAssumptions = 0;
+
     /**
      * A map of started tests and their respective start time
      */
@@ -184,6 +186,7 @@ public class XmlRunListener extends RunListener {
         _currentTest.get().appendChild(e);
         String message = failure.getMessage();
         e.setAttribute(SKIPPED_MESSAGE, message);
+        ignoredAssumptions++;
     }
 
     /**
@@ -228,7 +231,7 @@ public class XmlRunListener extends RunListener {
                 String.valueOf(result.getFailureCount()));
         _root.setAttribute(TESTSUITE_ERRORS, "0");
         _root.setAttribute(TESTSUITE_SKIP,
-                String.valueOf(result.getIgnoreCount()));
+                String.valueOf(result.getIgnoreCount() + ignoredAssumptions));
         _root.setAttribute(TESTSUITE_TIME,
                 String.valueOf(result.getRunTime() / 1000.0));
 
