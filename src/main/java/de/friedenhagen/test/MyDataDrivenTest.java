@@ -7,6 +7,8 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static org.junit.Assert.assertNotEquals;
+
 /**
  * Created by mirko on 07.10.15.
  */
@@ -41,6 +43,6 @@ public class MyDataDrivenTest {
 
     @Test
     public void thirteenIsTheEvilNumber() {
-        assert current % 13 != 0;
+        assertNotEquals("Must not be divisable by 13", 0, current % 13);
     }
 }
