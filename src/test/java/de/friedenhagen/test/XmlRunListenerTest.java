@@ -4,20 +4,21 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
+import org.junit.runner.notification.Failure;
+import org.junit.runner.notification.RunListener;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Created by mifr on 14.10.15.
- */
 public class XmlRunListenerTest {
 
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
     final XmlRunListener sut = new XmlRunListener(out);
+    private final Result result = new Result();
+    private final RunListener listener = result.createListener();
 
     @After
     public void closeOut() throws IOException {
@@ -36,13 +37,17 @@ public class XmlRunListenerTest {
 
     @Test
     public void testTestStarted() throws Exception {
+        listener.testStarted(Description.TEST_MECHANISM);
+        listener.testFinished(Description.TEST_MECHANISM);
         sut.testRunStarted(Description.EMPTY);
-        sut.testStarted(Description.EMPTY);
-        sut.testFinished(Description.EMPTY);
-        sut.testRunFinished(new Result());
-        assertThat(out.toString("UTF-8"))
+        sut.testStarted(Description.TEST_MECHANISM);
+        sut.testFinished(Description.TEST_MECHANISM);
+        sut.testRunFinished(result);
+        final String actual = out.toString("UTF-8");
+        assertThat(actual)
                 .startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
-                .contains("tests=\"0\"")
+                .contains("tests=\"1\"")
+                .contains("failures=\"0\"")
                 .endsWith("</testsuite>");
     }
 
@@ -58,7 +63,20 @@ public class XmlRunListenerTest {
 
     @Test
     public void testTestFailure() throws Exception {
-
+        listener.testStarted(Description.TEST_MECHANISM);
+        final Failure failure = new Failure(Description.TEST_MECHANISM, new RuntimeException());
+        listener.testFailure(failure);
+        listener.testFinished(Description.TEST_MECHANISM);
+        sut.testRunStarted(Description.EMPTY);
+        sut.testStarted(Description.TEST_MECHANISM);
+        sut.testFailure(failure);
+        sut.testRunFinished(result);
+        final String actual = out.toString("UTF-8");
+        assertThat(actual)
+                .startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
+                .contains("tests=\"1\"")
+                .contains("failures=\"1\"")
+                .endsWith("</testsuite>");
     }
 
     @Test
