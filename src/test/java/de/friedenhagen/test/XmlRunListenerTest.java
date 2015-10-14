@@ -1,6 +1,7 @@
 package de.friedenhagen.test;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
@@ -9,6 +10,7 @@ import org.junit.runner.notification.RunListener;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,6 +55,27 @@ public class XmlRunListenerTest {
 
     @Test
     public void testTestIgnored() throws Exception {
+        listener.testIgnored(Description.TEST_MECHANISM);
+        sut.testRunStarted(Description.EMPTY);
+        final Description ignore = Description.createTestDescription(XmlRunListenerTest.class, "Ignore", new Ignore() {
+                    public Class<? extends Annotation> annotationType() {
+                        return null;
+                    }
+
+                    public String value() {
+                        return "Ignore it";
+                    }
+                }
+        );
+        sut.testStarted(ignore);
+        sut.testIgnored(ignore);
+        sut.testRunFinished(result);
+        final String actual = out.toString("UTF-8");
+        assertThat(actual)
+                .startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
+                .contains("tests=\"1\"")
+                .contains("failures=\"0\"")
+                .endsWith("</testsuite>");
 
     }
 
