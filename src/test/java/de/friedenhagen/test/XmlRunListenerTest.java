@@ -55,11 +55,9 @@ public class XmlRunListenerTest {
 
     @Test
     public void testTestIgnored() throws Exception {
-        listener.testIgnored(Description.TEST_MECHANISM);
-        sut.testRunStarted(Description.EMPTY);
         final Description ignore = Description.createTestDescription(XmlRunListenerTest.class, "Ignore", new Ignore() {
                     public Class<? extends Annotation> annotationType() {
-                        return null;
+                        return Ignore.class;
                     }
 
                     public String value() {
@@ -67,6 +65,9 @@ public class XmlRunListenerTest {
                     }
                 }
         );
+        listener.testIgnored(ignore);
+        listener.testFinished(ignore);
+        sut.testRunStarted(Description.EMPTY);
         sut.testStarted(ignore);
         sut.testIgnored(ignore);
         sut.testRunFinished(result);
@@ -74,7 +75,7 @@ public class XmlRunListenerTest {
         assertThat(actual)
                 .startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
                 .contains("tests=\"1\"")
-                .contains("failures=\"0\"")
+                .contains("skip=\"1\"")
                 .endsWith("</testsuite>");
 
     }
