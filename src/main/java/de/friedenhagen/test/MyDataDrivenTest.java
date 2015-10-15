@@ -16,6 +16,7 @@ import static org.junit.Assume.assumeTrue;
 @RunWith(Parameterized.class)
 public class MyDataDrivenTest {
 
+    public static final int COUNT = Integer.valueOf(System.getProperty("loopCount", "102"));
     private final int current;
 
     @Parameterized.Parameters
@@ -27,7 +28,7 @@ public class MyDataDrivenTest {
                     volatile int i = 0;
 
                     public boolean hasNext() {
-                        return i < 102;
+                        return i < COUNT;
                     }
 
                     public Object[] next() {
