@@ -19,12 +19,13 @@ package de.friedenhagen.test;
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.junit.Ignore;
+import org.junit.runner.Description;
+import org.junit.runner.Result;
+import org.junit.runner.notification.Failure;
+import org.junit.runner.notification.RunListener;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -35,14 +36,11 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
-import org.junit.Ignore;
-import org.junit.runner.Description;
-import org.junit.runner.Result;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunListener;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A run listener creating XML reports which have the
@@ -51,6 +49,7 @@ import org.w3c.dom.Element;
  * @author Michel Kraemer
  */
 public class XmlRunListener extends RunListener {
+
     /**
      * Constants for XML tags
      */
@@ -60,7 +59,7 @@ public class XmlRunListener extends RunListener {
     private static final String TESTSUITE_TESTS = "tests";
     private static final String TESTSUITE_FAILURES = "failures";
     private static final String TESTSUITE_ERRORS = "errors";
-    private static final String TESTSUITE_SKIP = "skip";
+    private static final String TESTSUITE_SKIP = "skipped";
     private static final String TESTSUITE_TIME = "time";
     private static final String PROPERTIES = "properties";
     private static final String TESTCASE = "testcase";
@@ -86,20 +85,17 @@ public class XmlRunListener extends RunListener {
     /**
      * The element of the current test
      */
-    private final ThreadLocal<Element> _currentTest = new ThreadLocal<Element>();
+    private final ThreadLocal<Element> _currentTest = new ThreadLocal<>();
 
     /**
      * The output stream to write the document to
      */
     private final OutputStream _out;
-
-    private volatile int ignoredAssumptions = 0;
-
     /**
      * A map of started tests and their respective start time
      */
-    private final Map<Description, Long> _startedTests =
-            new ConcurrentHashMap<Description, Long>();
+    private final Map<Description, Long> _startedTests = new ConcurrentHashMap<>();
+    private volatile int ignoredAssumptions = 0;
 
     /**
      * Constructs a new listener
@@ -110,8 +106,7 @@ public class XmlRunListener extends RunListener {
         _out = out;
         final DocumentBuilder builder;
         try {
-            builder = DocumentBuilderFactory.newInstance()
-                    .newDocumentBuilder();
+            builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         } catch (ParserConfigurationException e) {
             throw new RuntimeException(e);
         }
@@ -131,8 +126,7 @@ public class XmlRunListener extends RunListener {
     public synchronized void testRunStarted(Description description) throws Exception {
         //add required attributes to test suite
         String name = description.getDisplayName();
-        _root.setAttribute(TESTSUITE_NAME,
-                name != null && !name.equalsIgnoreCase("null") ? name : UNKNOWN);
+        _root.setAttribute(TESTSUITE_NAME, name != null && !name.equalsIgnoreCase("null") ? name : UNKNOWN);
     }
 
     /**
@@ -160,13 +154,16 @@ public class XmlRunListener extends RunListener {
     @Override
     public synchronized void testIgnored(Description description) throws Exception {
         boolean started = false;
-        if (_currentTest == null) {
+        if (_currentTest == null || _currentTest.get() == null) {
             testStarted(description);
             started = true;
         }
 
         Element e = _document.createElement(SKIPPED);
-        _currentTest.get().appendChild(e);
+        if (_currentTest != null) {
+            final Optional<Element> element = Optional.ofNullable(_currentTest.get());
+            element.ifPresent((Element el) -> el.appendChild(e));
+        }
 
         String message = "";
         Ignore ignore = description.getAnnotation(Ignore.class);
@@ -183,7 +180,8 @@ public class XmlRunListener extends RunListener {
     @Override
     public synchronized void testAssumptionFailure(Failure failure) {
         Element e = _document.createElement(SKIPPED);
-        _currentTest.get().appendChild(e);
+        final Optional<Element> element = Optional.ofNullable(_currentTest.get());
+        element.ifPresent((Element el) -> el.appendChild(e));
         String message = failure.getMessage();
         e.setAttribute(SKIPPED_MESSAGE, message);
         ignoredAssumptions++;
@@ -195,13 +193,15 @@ public class XmlRunListener extends RunListener {
     @Override
     public synchronized void testFailure(Failure failure) throws Exception {
         Element e = _document.createElement(FAILURE);
-        _currentTest.get().appendChild(e);
+        if (_currentTest != null) {
+            final Optional<Element> element = Optional.ofNullable(_currentTest.get());
+            element.ifPresent((Element el) -> el.appendChild(e));
+        }
 
         if (failure.getMessage() != null) {
             e.setAttribute(FAILURE_MESSAGE, failure.getMessage());
         }
-        e.setAttribute(FAILURE_TYPE, failure.getException()
-                .getClass().getCanonicalName());
+        e.setAttribute(FAILURE_TYPE, failure.getException().getClass().getCanonicalName());
 
         String trace = failure.getTrace().replaceAll("\r\n", "\n");
         e.setTextContent(trace);
@@ -225,15 +225,11 @@ public class XmlRunListener extends RunListener {
      */
     @Override
     public synchronized void testRunFinished(Result result) throws Exception {
-        _root.setAttribute(TESTSUITE_TESTS,
-                String.valueOf(result.getRunCount()));
-        _root.setAttribute(TESTSUITE_FAILURES,
-                String.valueOf(result.getFailureCount()));
+        _root.setAttribute(TESTSUITE_TESTS, String.valueOf(result.getRunCount()));
+        _root.setAttribute(TESTSUITE_FAILURES, String.valueOf(result.getFailureCount()));
         _root.setAttribute(TESTSUITE_ERRORS, "0");
-        _root.setAttribute(TESTSUITE_SKIP,
-                String.valueOf(result.getIgnoreCount() + ignoredAssumptions));
-        _root.setAttribute(TESTSUITE_TIME,
-                String.valueOf(result.getRunTime() / 1000.0));
+        _root.setAttribute(TESTSUITE_SKIP, String.valueOf(result.getIgnoreCount() + ignoredAssumptions));
+        _root.setAttribute(TESTSUITE_TIME, String.valueOf(result.getRunTime() / 1000.0));
 
         Source src = new DOMSource(_document);
         StreamResult stream = new StreamResult(_out);
