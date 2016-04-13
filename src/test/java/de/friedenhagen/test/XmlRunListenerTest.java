@@ -16,9 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class XmlRunListenerTest {
 
-    final ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-    final XmlRunListener sut = new XmlRunListener(out);
+    private final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    private final XmlRunListener sut = new XmlRunListener(out);
     private final Result result = new Result();
     private final RunListener listener = result.createListener();
 
@@ -75,7 +74,7 @@ public class XmlRunListenerTest {
         assertThat(actual)
                 .startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
                 .contains("tests=\"1\"")
-                .contains("skip=\"1\"")
+                .contains("skipped=\"1\"")
                 .endsWith("</testsuite>");
 
     }
