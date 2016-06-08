@@ -2,6 +2,7 @@ package de.friedenhagen.test;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runner.notification.RunListener;
 import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
@@ -34,6 +35,10 @@ public class MyDataDrivenTest {
                     public Object[] next() {
                         return new Object[]{i++};
                     }
+
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
                 };
             }
         };
@@ -44,7 +49,7 @@ public class MyDataDrivenTest {
     }
 
     @Test
-    public void thirteenIsTheEvilNumber() {
+    public void thirteenIsTheEvilNumber() throws InterruptedException {
         assumeTrue("Skip numbers divisable by 13", current % 13 != 0);
         assertNotEquals("Must not be divisable by 101", 0, current % 101);
     }
