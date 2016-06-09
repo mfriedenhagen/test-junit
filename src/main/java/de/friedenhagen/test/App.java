@@ -1,6 +1,5 @@
 package de.friedenhagen.test;
 
-import org.junit.experimental.ParallelComputer;
 import org.junit.internal.TextListener;
 import org.junit.runner.Computer;
 import org.junit.runner.Description;
@@ -25,7 +24,7 @@ public class App {
         core.addListener(new MyTextListener(System.out));
 
         final Boolean runParallel = Boolean.valueOf(System.getProperty("runParallel", "true"));
-        final Computer computer = new MyParallelComputer(10);
+        final Computer computer = new FixedThreadParallelComputer(10);
         //final Computer computer = Computer.serial();
         // final Computer computer = runParallel ? ParallelComputer.methods() : Computer.serial();
         final Result run = core.run(computer, MyDataDrivenTest.class);

@@ -13,13 +13,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by mirko on 08.06.16.
  */
-public class MyParallelComputer extends Computer {
+public class FixedThreadParallelComputer extends Computer {
 
     private final int threadCount;
-    public MyParallelComputer() {
+    public FixedThreadParallelComputer() {
         this(5);
     }
-    public MyParallelComputer(int threadCount) {
+    public FixedThreadParallelComputer(int threadCount) {
         this.threadCount = threadCount;
     }
     private Runner parallelize(Runner runner) {
